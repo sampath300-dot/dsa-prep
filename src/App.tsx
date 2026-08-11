@@ -20,7 +20,7 @@ export default function App() {
   // Per-user problem state
   const [problems, setProblems] = useState<Problem[]>(() => {
     const activeUser = localStorage.getItem('dsa_tracker_active_user') || 'default_user';
-    const saved = localStorage.getItem(`dsa_tracker_user_${activeUser}_v6`);
+    const saved = localStorage.getItem(`dsa_tracker_user_${activeUser}_v7`);
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -59,7 +59,7 @@ export default function App() {
 
   // Save problems per user
   useEffect(() => {
-    localStorage.setItem(`dsa_tracker_user_${username}_v6`, JSON.stringify(problems));
+    localStorage.setItem(`dsa_tracker_user_${username}_v7`, JSON.stringify(problems));
     localStorage.setItem('dsa_tracker_active_user', username);
   }, [problems, username]);
 
@@ -78,7 +78,7 @@ export default function App() {
     localStorage.setItem('dsa_tracker_active_user', newUsername);
 
     // Load user problems or initialize default
-    const saved = localStorage.getItem(`dsa_tracker_user_${newUsername}_v6`);
+    const saved = localStorage.getItem(`dsa_tracker_user_${newUsername}_v7`);
     if (saved) {
       try {
         setProblems(JSON.parse(saved));
@@ -131,7 +131,7 @@ export default function App() {
   };
 
   const resetToInitial = () => {
-    if (window.confirm(`Reset ${username}'s list to default initial problems (including Google 2025-2026 set)?`)) {
+    if (window.confirm(`Reset ${username}'s list to default initial problems (including Google Prerequisite Roadmap)?`)) {
       setProblems(INITIAL_PROBLEMS);
     }
   };
@@ -824,7 +824,7 @@ export default function App() {
 
                       {/* Level & Notes */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px', flexWrap: 'wrap', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                        <span style={{ background: 'rgba(56, 189, 248, 0.1)', color: 'var(--primary)', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+                        <span style={{ background: p.level.startsWith('Prerequisite') ? 'rgba(74, 222, 128, 0.15)' : 'rgba(56, 189, 248, 0.1)', color: p.level.startsWith('Prerequisite') ? '#4ade80' : 'var(--primary)', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
                           {p.level}
                         </span>
 
