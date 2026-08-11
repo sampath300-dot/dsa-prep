@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Trash2, Search, Plus, RotateCcw, Moon, Sun, Shield, ArrowLeft, ArrowRight, Building2, BookOpen, Target, User, LogIn, Sparkles, Flame } from 'lucide-react';
+import { ExternalLink, Trash2, Search, Plus, RotateCcw, Moon, Sun, Shield, ArrowLeft, ArrowRight, Building2, BookOpen, Target, User, LogIn, Sparkles, Flame, Brain, Code2 } from 'lucide-react';
 import type { Problem, Difficulty } from './types';
-import { INITIAL_PROBLEMS, TOPICS_LIST, COMPANY_LIST } from './data';
+import { INITIAL_PROBLEMS, TOPICS_LIST, COMPANY_LIST, APPROACHES_LIST } from './data';
 import { getCompanyLogoComponent } from './CompanyLogos';
 import NNDLDashboard from './components/NNDLDashboard';
 
 type Theme = 'black' | 'dark' | 'light';
-type MainNavTab = 'concepts' | 'companies' | 'daily-plan';
+type MainNavTab = 'concepts' | 'companies' | 'approaches' | 'daily-plan';
 type CompanySectionTab = 'All' | 'Prerequisites' | 'Benchmarks';
 
 export default function App() {
@@ -21,7 +21,7 @@ export default function App() {
   // Per-user problem state
   const [problems, setProblems] = useState<Problem[]>(() => {
     const activeUser = localStorage.getItem('dsa_tracker_active_user') || 'default_user';
-    const saved = localStorage.getItem(`dsa_tracker_user_${activeUser}_v8`);
+    const saved = localStorage.getItem(`dsa_tracker_user_${activeUser}_v9`);
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -37,12 +37,13 @@ export default function App() {
     return (saved as Theme) || 'black';
   });
 
-  // Top Nav Tab: 'concepts' | 'companies' | 'daily-plan'
+  // Top Nav Tab: 'concepts' | 'companies' | 'approaches' | 'daily-plan'
   const [mainNavTab, setMainNavTab] = useState<MainNavTab>('concepts');
 
-  // Navigation State: null = Home Page, string = Topic ID or Company ID
+  // Navigation State: null = Home Page, string = Topic ID, Company ID, or Approach ID
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+  const [selectedApproachId, setSelectedApproachId] = useState<string | null>(null);
 
   // Sub-filter tabs inside Company View ('All' | 'Prerequisites' | 'Benchmarks')
   const [companySectionTab, setCompanySectionTab] = useState<CompanySectionTab>('Prerequisites');
@@ -63,7 +64,7 @@ export default function App() {
 
   // Save problems per user
   useEffect(() => {
-    localStorage.setItem(`dsa_tracker_user_${username}_v8`, JSON.stringify(problems));
+    localStorage.setItem(`dsa_tracker_user_${username}_v9`, JSON.stringify(problems));
     localStorage.setItem('dsa_tracker_active_user', username);
   }, [problems, username]);
 
@@ -82,7 +83,7 @@ export default function App() {
     localStorage.setItem('dsa_tracker_active_user', newUsername);
 
     // Load user problems or initialize default
-    const saved = localStorage.getItem(`dsa_tracker_user_${newUsername}_v8`);
+    const saved = localStorage.getItem(`dsa_tracker_user_${newUsername}_v9`);
     if (saved) {
       try {
         setProblems(JSON.parse(saved));
@@ -99,6 +100,7 @@ export default function App() {
 
   const activeTopic = TOPICS_LIST.find(t => t.id === selectedTopicId);
   const activeCompany = COMPANY_LIST.find(c => c.id === selectedCompanyId);
+  const activeApproach = APPROACHES_LIST.find(a => a.id === selectedApproachId);
 
   const handleAddProblem = (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,9 +111,10 @@ export default function App() {
     const newProb: Problem = {
       id: Date.now(),
       name: name.trim(),
-      concept: activeCompany ? `company-${activeCompany.id}` : (activeTopic ? activeTopic.concept : 'String'),
+      concept: activeCompany ? `company-${activeCompany.id}` : (activeTopic ? activeTopic.concept : (activeApproach ? activeApproach.name : 'String')),
       company: activeCompany ? activeCompany.id : undefined,
-      level: activeCompany ? `${activeCompany.name} Problem` : `${diffToUse} Problem`,
+      approach: activeApproach ? activeApproach.id : undefined,
+      level: activeApproach ? `${activeApproach.name} Approach` : (activeCompany ? `${activeCompany.name} Problem` : `${diffToUse} Problem`),
       difficulty: diffToUse,
       link: link.trim() || undefined,
       notes: notes.trim() || undefined,
@@ -135,7 +138,7 @@ export default function App() {
   };
 
   const resetToInitial = () => {
-    if (window.confirm(`Reset ${username}'s list to default initial problems (including Google Prerequisite Roadmap)?`)) {
+    if (window.confirm(`Reset ${username}'s list to default initial problems (including Google & Algorithmic Approaches)?`)) {
       setProblems(INITIAL_PROBLEMS);
     }
   };
@@ -144,12 +147,15 @@ export default function App() {
   const solvedOverall = problems.filter(p => p.solved).length;
   const percentageOverall = totalOverall > 0 ? Math.round((solvedOverall / totalOverall) * 100) : 0;
 
-  // Filter problems for active topic OR company
-  const viewProblems = activeCompany
-    ? problems.filter(p => p.company === activeCompany.id || p.concept === `company-${activeCompany.id}`)
-    : (activeTopic
-        ? problems.filter(p => p.concept.toLowerCase() === activeTopic.concept.toLowerCase())
-        : problems
+  // Filter problems for active topic OR company OR approach
+  const viewProblems = activeApproach
+    ? problems.filter(p => p.approach === activeApproach.id)
+    : (activeCompany
+        ? problems.filter(p => p.company === activeCompany.id || p.concept === `company-${activeCompany.id}`)
+        : (activeTopic
+            ? problems.filter(p => p.concept.toLowerCase() === activeTopic.concept.toLowerCase())
+            : problems
+          )
       );
 
   // Apply Section sub-tabs for Company view (Prerequisites vs Benchmarks)
@@ -161,7 +167,7 @@ export default function App() {
       })
     : viewProblems;
 
-  const topicProblemsWithDifficulty = (selectedDifficultyTab === 'All' || activeCompany)
+  const topicProblemsWithDifficulty = (selectedDifficultyTab === 'All' || activeCompany || activeApproach)
     ? companyFilteredProblems
     : viewProblems.filter(p => p.difficulty === selectedDifficultyTab);
 
@@ -187,7 +193,7 @@ export default function App() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
           <div>
             <h1 
-              onClick={() => { setSelectedTopicId(null); setSelectedCompanyId(null); }}
+              onClick={() => { setSelectedTopicId(null); setSelectedCompanyId(null); setSelectedApproachId(null); }}
               style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
             >
               <span>DSA Tracker</span>
@@ -339,9 +345,9 @@ export default function App() {
       )}
 
       {/* ── HOME DASHBOARD VIEW ── */}
-      {selectedTopicId === null && selectedCompanyId === null ? (
+      {selectedTopicId === null && selectedCompanyId === null && selectedApproachId === null ? (
         <div>
-          {/* Main Nav Tabs: Concepts vs Companies vs Daily Plan */}
+          {/* Main Nav Tabs: Concepts vs Companies vs Algorithmic Approaches vs Daily Plan */}
           <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '12px', flexWrap: 'wrap' }}>
             <button
               onClick={() => setMainNavTab('concepts')}
@@ -379,6 +385,25 @@ export default function App() {
               }}
             >
               <Building2 size={18} /> Company Specific Questions
+            </button>
+
+            <button
+              onClick={() => setMainNavTab('approaches')}
+              style={{
+                background: mainNavTab === 'approaches' ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
+                color: mainNavTab === 'approaches' ? '#c084fc' : 'var(--text-muted)',
+                border: `1px solid ${mainNavTab === 'approaches' ? '#c084fc' : 'var(--border)'}`,
+                borderRadius: '8px',
+                padding: '10px 20px',
+                fontSize: '0.95rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Brain size={18} /> Solution Approaches
             </button>
 
             <button
@@ -560,16 +585,95 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 3: SMART DAILY PRACTICE PLAN */}
+          {/* TAB 3: ALGORITHMIC APPROACHES & PATTERNS */}
+          {mainNavTab === 'approaches' && (
+            <div>
+              <div style={{ marginBottom: '20px' }}>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Brain size={20} color="#c084fc" /> Algorithmic Solution Approaches
+                </h2>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                  Categorize and solve problems based on core LeetCode pattern techniques & Python tools.
+                </p>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '18px' }}>
+                {APPROACHES_LIST.map(appr => {
+                  const apprProbs = problems.filter(p => p.approach === appr.id);
+                  const aSolved = apprProbs.filter(p => p.solved).length;
+                  const aTotal = apprProbs.length;
+                  const aPct = aTotal > 0 ? Math.round((aSolved / aTotal) * 100) : 0;
+
+                  return (
+                    <div
+                      key={appr.id}
+                      onClick={() => {
+                        setSelectedApproachId(appr.id);
+                        setSelectedDifficultyTab('All');
+                      }}
+                      style={{
+                        background: 'var(--panel)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '10px',
+                        padding: '22px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between'
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.borderColor = '#c084fc')}
+                      onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+                    >
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                          <span style={{ fontSize: '2rem' }}>{appr.icon}</span>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '3px 10px', borderRadius: '6px', background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', fontFamily: 'monospace' }}>
+                            {appr.tool}
+                          </span>
+                        </div>
+
+                        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text)', marginBottom: '6px' }}>
+                          {appr.name}
+                        </h3>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.45, marginBottom: '18px' }}>
+                          {appr.description}
+                        </p>
+                      </div>
+
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                          <span>{aTotal} {aTotal === 1 ? 'Problem' : 'Problems'}</span>
+                          <span style={{ fontWeight: 700, color: aSolved > 0 ? 'var(--success)' : 'var(--text-muted)' }}>
+                            {aSolved} / {aTotal} Solved
+                          </span>
+                        </div>
+
+                        <div style={{ height: '5px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden', marginBottom: '14px' }}>
+                          <div style={{ height: '100%', width: `${aPct}%`, background: '#c084fc', transition: 'width 0.3s' }} />
+                        </div>
+
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#c084fc', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          Open {appr.name} Problems <ArrowRight size={15} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: SMART DAILY PRACTICE PLAN */}
           {mainNavTab === 'daily-plan' && <NNDLDashboard problems={problems} onToggleSolved={toggleSolved} />}
         </div>
       ) : (
-        /* ── DETAIL PROBLEM LIST VIEW (Topic OR Company) ── */
+        /* ── DETAIL PROBLEM LIST VIEW (Topic OR Company OR Approach) ── */
         <div>
           {/* Back button & Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
             <button
-              onClick={() => { setSelectedTopicId(null); setSelectedCompanyId(null); }}
+              onClick={() => { setSelectedTopicId(null); setSelectedCompanyId(null); setSelectedApproachId(null); }}
               style={{
                 background: 'var(--panel)',
                 border: '1px solid var(--border)',
@@ -584,7 +688,7 @@ export default function App() {
                 gap: '8px'
               }}
             >
-              <ArrowLeft size={18} /> {activeCompany ? 'Back to Companies' : 'Back to Concept Modules'}
+              <ArrowLeft size={18} /> {activeApproach ? 'Back to Solution Approaches' : (activeCompany ? 'Back to Companies' : 'Back to Concept Modules')}
             </button>
 
             <button
@@ -609,17 +713,25 @@ export default function App() {
 
           <div style={{ marginBottom: '20px' }}>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {activeCompany ? (
+              {activeApproach ? (
+                <span style={{ fontSize: '1.8rem' }}>{activeApproach.icon}</span>
+              ) : activeCompany ? (
                 <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)' }}>
                   {getCompanyLogoComponent(activeCompany.id, 22)}
                 </span>
               ) : (
                 <span>{activeTopic?.icon}</span>
               )}
-              <span>{activeCompany ? `${activeCompany.name} Interview Questions` : activeTopic?.title}</span>
+              <span>{activeApproach ? `${activeApproach.name} Pattern` : (activeCompany ? `${activeCompany.name} Interview Questions` : activeTopic?.title)}</span>
             </h2>
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-              {activeCompany ? activeCompany.description : activeTopic?.description}
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>{activeApproach ? activeApproach.description : (activeCompany ? activeCompany.description : activeTopic?.description)}</span>
+              {activeApproach && (
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', fontFamily: 'monospace' }}>
+                  <Code2 size={13} style={{ display: 'inline', marginRight: '4px' }} />
+                  Python Tool: {activeApproach.tool}
+                </span>
+              )}
             </p>
           </div>
 
@@ -741,7 +853,7 @@ export default function App() {
           {showAddForm && (
             <form onSubmit={handleAddProblem} style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: '10px', padding: '20px', marginBottom: '24px' }}>
               <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '14px' }}>
-                Add Problem to {activeCompany ? activeCompany.name : activeTopic?.title}
+                Add Problem to {activeApproach ? `${activeApproach.name} Pattern` : (activeCompany ? activeCompany.name : activeTopic?.title)}
               </h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '14px' }}>
                 <div>
@@ -778,10 +890,10 @@ export default function App() {
                   />
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: 600 }}>Notes / Frequency / Key Insight (Optional)</label>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: 600 }}>Notes / Key Insight (Optional)</label>
                   <input
                     type="text"
-                    placeholder="e.g. Asked 5+ times in phone screen, use Hash Map"
+                    placeholder="e.g. Use Hash Map for O(N) lookup"
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
                     style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', padding: '9px 12px', color: 'var(--text)', fontSize: '0.9rem' }}
@@ -800,7 +912,7 @@ export default function App() {
               <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
               <input
                 type="text"
-                placeholder={`Search inside ${activeCompany ? activeCompany.name : activeTopic?.title}...`}
+                placeholder={`Search inside ${activeApproach ? activeApproach.name : (activeCompany ? activeCompany.name : activeTopic?.title)}...`}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 style={{ width: '100%', background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: '8px', padding: '9px 12px 9px 38px', color: 'var(--text)', fontSize: '0.9rem' }}
@@ -832,7 +944,9 @@ export default function App() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {filteredProblems.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', background: 'var(--panel)', borderRadius: '10px', border: '1px solid var(--border)' }}>
-                {activeCompany 
+                {activeApproach
+                  ? `No problems added to the ${activeApproach.name} approach yet! Click Add Problem above to add your first question for this pattern.`
+                  : activeCompany 
                   ? `No problems found under this section. Switch section tabs above or click Add Problem to add one!`
                   : `No ${selectedDifficultyTab} problems found for ${activeTopic?.title}. Click Add Problem above to add one!`
                 }

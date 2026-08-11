@@ -5,6 +5,7 @@ export interface Problem {
   name: string;
   concept: string;
   company?: string;
+  approach?: string;
   level: string;
   difficulty: Difficulty;
   link?: string;
@@ -28,5 +29,13 @@ export interface Company {
   name: string;
   icon: string;
   color: string;
+  description: string;
+}
+
+export interface Approach {
+  id: string;
+  name: string;
+  tool: string;
+  icon: string;
   description: string;
 }
