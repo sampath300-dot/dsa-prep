@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Trash2, Search, Plus, RotateCcw, Moon, Sun, Shield, ArrowLeft, ArrowRight, Building2, BookOpen, Target, User, LogIn } from 'lucide-react';
+import { ExternalLink, Trash2, Search, Plus, RotateCcw, Moon, Sun, Shield, ArrowLeft, ArrowRight, Building2, BookOpen, Target, User, LogIn, Sparkles, Flame } from 'lucide-react';
 import type { Problem, Difficulty } from './types';
 import { INITIAL_PROBLEMS, TOPICS_LIST, COMPANY_LIST } from './data';
 import { getCompanyLogoComponent } from './CompanyLogos';
@@ -7,6 +7,7 @@ import NNDLDashboard from './components/NNDLDashboard';
 
 type Theme = 'black' | 'dark' | 'light';
 type MainNavTab = 'concepts' | 'companies' | 'daily-plan';
+type CompanySectionTab = 'All' | 'Prerequisites' | 'Benchmarks';
 
 export default function App() {
   // Current logged in username (default 'default_user')
@@ -20,7 +21,7 @@ export default function App() {
   // Per-user problem state
   const [problems, setProblems] = useState<Problem[]>(() => {
     const activeUser = localStorage.getItem('dsa_tracker_active_user') || 'default_user';
-    const saved = localStorage.getItem(`dsa_tracker_user_${activeUser}_v7`);
+    const saved = localStorage.getItem(`dsa_tracker_user_${activeUser}_v8`);
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -43,6 +44,9 @@ export default function App() {
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
 
+  // Sub-filter tabs inside Company View ('All' | 'Prerequisites' | 'Benchmarks')
+  const [companySectionTab, setCompanySectionTab] = useState<CompanySectionTab>('Prerequisites');
+
   // Difficulty Tab inside Topic View (default 'Easy')
   const [selectedDifficultyTab, setSelectedDifficultyTab] = useState<Difficulty | 'All'>('Easy');
 
@@ -59,7 +63,7 @@ export default function App() {
 
   // Save problems per user
   useEffect(() => {
-    localStorage.setItem(`dsa_tracker_user_${username}_v7`, JSON.stringify(problems));
+    localStorage.setItem(`dsa_tracker_user_${username}_v8`, JSON.stringify(problems));
     localStorage.setItem('dsa_tracker_active_user', username);
   }, [problems, username]);
 
@@ -78,7 +82,7 @@ export default function App() {
     localStorage.setItem('dsa_tracker_active_user', newUsername);
 
     // Load user problems or initialize default
-    const saved = localStorage.getItem(`dsa_tracker_user_${newUsername}_v7`);
+    const saved = localStorage.getItem(`dsa_tracker_user_${newUsername}_v8`);
     if (saved) {
       try {
         setProblems(JSON.parse(saved));
@@ -148,8 +152,17 @@ export default function App() {
         : problems
       );
 
+  // Apply Section sub-tabs for Company view (Prerequisites vs Benchmarks)
+  const companyFilteredProblems = activeCompany
+    ? viewProblems.filter(p => {
+        if (companySectionTab === 'Prerequisites') return p.level.startsWith('Prerequisite');
+        if (companySectionTab === 'Benchmarks') return !p.level.startsWith('Prerequisite');
+        return true;
+      })
+    : viewProblems;
+
   const topicProblemsWithDifficulty = (selectedDifficultyTab === 'All' || activeCompany)
-    ? viewProblems
+    ? companyFilteredProblems
     : viewProblems.filter(p => p.difficulty === selectedDifficultyTab);
 
   const filteredProblems = topicProblemsWithDifficulty.filter(p => {
@@ -489,6 +502,7 @@ export default function App() {
                       key={comp.id}
                       onClick={() => {
                         setSelectedCompanyId(comp.id);
+                        setCompanySectionTab('Prerequisites');
                         setSelectedDifficultyTab('All');
                       }}
                       style={{
@@ -608,6 +622,77 @@ export default function App() {
               {activeCompany ? activeCompany.description : activeTopic?.description}
             </p>
           </div>
+
+          {/* ── COMPANY SECTION SUB-TABS (Foundational Easy vs Benchmark Interview Questions) ── */}
+          {activeCompany && (
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '14px', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => setCompanySectionTab('Prerequisites')}
+                style={{
+                  background: companySectionTab === 'Prerequisites' ? 'rgba(74, 222, 128, 0.15)' : 'var(--panel)',
+                  color: companySectionTab === 'Prerequisites' ? '#4ade80' : 'var(--text-muted)',
+                  border: `1px solid ${companySectionTab === 'Prerequisites' ? '#4ade80' : 'var(--border)'}`,
+                  borderRadius: '8px',
+                  padding: '9px 18px',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Sparkles size={16} /> 🟢 Foundational Prerequisites (Easy First)
+                <span style={{ fontSize: '0.75rem', opacity: 0.8, background: 'rgba(255,255,255,0.08)', padding: '1px 6px', borderRadius: '4px' }}>
+                  {viewProblems.filter(p => p.level.startsWith('Prerequisite') && p.solved).length} / {viewProblems.filter(p => p.level.startsWith('Prerequisite')).length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setCompanySectionTab('Benchmarks')}
+                style={{
+                  background: companySectionTab === 'Benchmarks' ? 'rgba(249, 115, 22, 0.15)' : 'var(--panel)',
+                  color: companySectionTab === 'Benchmarks' ? '#f97316' : 'var(--text-muted)',
+                  border: `1px solid ${companySectionTab === 'Benchmarks' ? '#f97316' : 'var(--border)'}`,
+                  borderRadius: '8px',
+                  padding: '9px 18px',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Flame size={16} /> 🔥 Google Benchmarks (Medium & Hard)
+                <span style={{ fontSize: '0.75rem', opacity: 0.8, background: 'rgba(255,255,255,0.08)', padding: '1px 6px', borderRadius: '4px' }}>
+                  {viewProblems.filter(p => !p.level.startsWith('Prerequisite') && p.solved).length} / {viewProblems.filter(p => !p.level.startsWith('Prerequisite')).length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setCompanySectionTab('All')}
+                style={{
+                  background: companySectionTab === 'All' ? 'var(--panel-hover)' : 'var(--panel)',
+                  color: companySectionTab === 'All' ? 'var(--text)' : 'var(--text-muted)',
+                  border: `1px solid ${companySectionTab === 'All' ? 'var(--text)' : 'var(--border)'}`,
+                  borderRadius: '8px',
+                  padding: '9px 18px',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <span>All {activeCompany.name} Questions ({viewProblems.length})</span>
+              </button>
+            </div>
+          )}
 
           {/* ── DIFFICULTY TABS (For Topics) ── */}
           {activeTopic && (
@@ -748,7 +833,7 @@ export default function App() {
             {filteredProblems.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', background: 'var(--panel)', borderRadius: '10px', border: '1px solid var(--border)' }}>
                 {activeCompany 
-                  ? `No problems added for ${activeCompany.name} yet! Click Add Problem above to start building your ${activeCompany.name} question list.`
+                  ? `No problems found under this section. Switch section tabs above or click Add Problem to add one!`
                   : `No ${selectedDifficultyTab} problems found for ${activeTopic?.title}. Click Add Problem above to add one!`
                 }
               </div>
