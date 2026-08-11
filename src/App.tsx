@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Trash2, Search, Plus, RotateCcw, Moon, Sun, Shield, ArrowLeft, ArrowRight, Building2, BookOpen, Target, User, LogIn, Sparkles, Flame, Brain, Code2 } from 'lucide-react';
+import { ExternalLink, Trash2, Search, Plus, Moon, Sun, Shield, ArrowLeft, ArrowRight, Building2, BookOpen, Target, User, LogIn, Sparkles, Flame, Brain, Code2 } from 'lucide-react';
 import type { Problem, Difficulty } from './types';
 import { INITIAL_PROBLEMS, TOPICS_LIST, COMPANY_LIST, APPROACHES_LIST } from './data';
 import { getCompanyLogoComponent } from './CompanyLogos';
@@ -137,12 +137,6 @@ export default function App() {
     setProblems(problems.filter(p => p.id !== id));
   };
 
-  const resetToInitial = () => {
-    if (window.confirm(`Reset ${username}'s list to default initial problems (including Google & Algorithmic Approaches)?`)) {
-      setProblems(INITIAL_PROBLEMS);
-    }
-  };
-
   const totalOverall = problems.length;
   const solvedOverall = problems.filter(p => p.solved).length;
   const percentageOverall = totalOverall > 0 ? Math.round((solvedOverall / totalOverall) * 100) : 0;
@@ -278,25 +272,7 @@ export default function App() {
               </button>
             </div>
 
-            <button
-              onClick={resetToInitial}
-              title="Reset Initial Problems"
-              style={{
-                background: 'transparent',
-                border: '1px solid var(--border)',
-                color: 'var(--text-muted)',
-                padding: '8px 12px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.8rem',
-                fontWeight: 600
-              }}
-            >
-              <RotateCcw size={15} /> Reset
-            </button>
+            {/* Reset button hidden to prevent accidental data loss */}
           </div>
         </div>
 
