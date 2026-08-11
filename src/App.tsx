@@ -20,7 +20,7 @@ export default function App() {
   // Per-user problem state
   const [problems, setProblems] = useState<Problem[]>(() => {
     const activeUser = localStorage.getItem('dsa_tracker_active_user') || 'default_user';
-    const saved = localStorage.getItem(`dsa_tracker_user_${activeUser}`);
+    const saved = localStorage.getItem(`dsa_tracker_user_${activeUser}_v6`);
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -59,7 +59,7 @@ export default function App() {
 
   // Save problems per user
   useEffect(() => {
-    localStorage.setItem(`dsa_tracker_user_${username}`, JSON.stringify(problems));
+    localStorage.setItem(`dsa_tracker_user_${username}_v6`, JSON.stringify(problems));
     localStorage.setItem('dsa_tracker_active_user', username);
   }, [problems, username]);
 
@@ -78,7 +78,7 @@ export default function App() {
     localStorage.setItem('dsa_tracker_active_user', newUsername);
 
     // Load user problems or initialize default
-    const saved = localStorage.getItem(`dsa_tracker_user_${newUsername}`);
+    const saved = localStorage.getItem(`dsa_tracker_user_${newUsername}_v6`);
     if (saved) {
       try {
         setProblems(JSON.parse(saved));
@@ -131,7 +131,7 @@ export default function App() {
   };
 
   const resetToInitial = () => {
-    if (window.confirm(`Reset ${username}'s list to default 25 String problems?`)) {
+    if (window.confirm(`Reset ${username}'s list to default initial problems (including Google 2025-2026 set)?`)) {
       setProblems(INITIAL_PROBLEMS);
     }
   };
@@ -261,7 +261,7 @@ export default function App() {
 
             <button
               onClick={resetToInitial}
-              title="Reset 25 String Problems"
+              title="Reset Initial Problems"
               style={{
                 background: 'transparent',
                 border: '1px solid var(--border)',
