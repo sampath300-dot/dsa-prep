@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Target, Zap, Clock, CheckCircle, RefreshCw, AlertCircle, ExternalLink } from 'lucide-react';
-import { calculateRealRetention, analyzeCodeComplexity } from '../nndl/NeuralNetwork';
+import { Target, Zap, Clock, CheckCircle, RefreshCw, AlertCircle, ExternalLink, Cpu, Network } from 'lucide-react';
+import { calculateRealRetention, analyzeCodeComplexity, computeNeuralPatternActivations } from '../nndl/NeuralNetwork';
 import type { Problem } from '../types';
 
 interface Props {
@@ -11,6 +11,12 @@ interface Props {
 export default function NNDLDashboard({ problems, onToggleSolved }: Props) {
   const [userCode, setUserCode] = useState('');
   const [codeAnalysis, setCodeAnalysis] = useState<{ timeComplexity: string; spaceComplexity: string; loopCount: number } | null>(null);
+
+  // Neural Predictor Input State
+  const [problemQuery, setProblemQuery] = useState('Find contiguous subarray with max sum in sorted array');
+
+  // Compute neural pattern activations
+  const neuralActivations = computeNeuralPatternActivations(problemQuery);
 
   // Compute retention & daily recommendations
   const solvedProblems = problems.filter(p => p.solved);
@@ -215,6 +221,44 @@ export default function NNDLDashboard({ problems, onToggleSolved }: Props) {
           )}
         </div>
 
+      </div>
+
+      {/* FEATURE 3: NEURAL NETWORK ALGORITHMIC PATTERN PREDICTOR (Softmax Activations) */}
+      <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+          <h4 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text)' }}>
+            <Cpu size={18} color="#c084fc" /> Neural Pattern Predictor (Softmax Activation Weights)
+          </h4>
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '4px', background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', fontFamily: 'monospace' }}>
+            <Network size={12} style={{ display: 'inline', marginRight: '4px' }} />
+            Forward Pass: P(Pattern) = Softmax(W·x + b)
+          </span>
+        </div>
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '14px' }}>
+          Type any problem statement or key requirement to compute neural pattern probabilities:
+        </p>
+
+        <input
+          type="text"
+          value={problemQuery}
+          onChange={e => setProblemQuery(e.target.value)}
+          placeholder="e.g. Find longest subarray sum in sorted matrix"
+          style={{ width: '100%', background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: '6px', padding: '9px 12px', color: 'var(--text)', fontSize: '0.85rem', marginBottom: '14px' }}
+        />
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+          {neuralActivations.map(act => (
+            <div key={act.pattern} style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: '8px', padding: '10px 12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)', marginBottom: '6px' }}>
+                <span>{act.pattern}</span>
+                <span style={{ color: '#c084fc' }}>{act.probability}%</span>
+              </div>
+              <div style={{ height: '4px', background: 'var(--border)', borderRadius: '2px', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${act.probability}%`, background: '#c084fc', transition: 'width 0.3s' }} />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Memory Decay Warning Banner */}
