@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Trash2, Search, Plus, Moon, Sun, Shield, ArrowLeft, ArrowRight, Building2, BookOpen, Target, User, LogIn, Sparkles, Flame, Brain, Code2 } from 'lucide-react';
+import { ExternalLink, Trash2, Search, Plus, Moon, Sun, Shield, ArrowRight, Building2, BookOpen, Target, User, LogIn, Sparkles, Flame, Brain, Code2 } from 'lucide-react';
 import type { Problem, Difficulty } from './types';
 import { INITIAL_PROBLEMS, TOPICS_LIST, COMPANY_LIST, APPROACHES_LIST } from './data';
 import { getCompanyLogoComponent } from './CompanyLogos';
@@ -72,6 +72,32 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('dsa_tracker_theme', theme);
   }, [theme]);
+
+  // Sync state with URL Hash for native Back/Forward button support
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (!hash) {
+        setMainNavTab('concepts');
+        setSelectedTopicId(null);
+        setSelectedCompanyId(null);
+        setSelectedApproachId(null);
+        return;
+      }
+      
+      const [type, id] = hash.split('/');
+      if (['concepts', 'companies', 'approaches', 'daily-plan'].includes(type)) {
+        setMainNavTab(type as MainNavTab);
+        setSelectedTopicId(type === 'concepts' && id ? id : null);
+        setSelectedCompanyId(type === 'companies' && id ? id : null);
+        setSelectedApproachId(type === 'approaches' && id ? id : null);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    handleHashChange(); // Init on mount
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // Handle Login / Switch User
   const handleLoginSubmit = (e: React.FormEvent) => {
@@ -326,7 +352,7 @@ export default function App() {
           {/* Main Nav Tabs: Concepts vs Companies vs Algorithmic Approaches vs Daily Plan */}
           <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', borderBottom: '1px solid var(--border)', paddingBottom: '12px', flexWrap: 'wrap' }}>
             <button
-              onClick={() => setMainNavTab('concepts')}
+              onClick={() => window.location.hash = 'concepts'}
               style={{
                 background: mainNavTab === 'concepts' ? 'var(--panel-hover)' : 'transparent',
                 color: mainNavTab === 'concepts' ? 'var(--primary)' : 'var(--text-muted)',
@@ -345,7 +371,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setMainNavTab('companies')}
+              onClick={() => window.location.hash = 'companies'}
               style={{
                 background: mainNavTab === 'companies' ? 'var(--panel-hover)' : 'transparent',
                 color: mainNavTab === 'companies' ? '#facc15' : 'var(--text-muted)',
@@ -364,7 +390,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setMainNavTab('approaches')}
+              onClick={() => window.location.hash = 'approaches'}
               style={{
                 background: mainNavTab === 'approaches' ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
                 color: mainNavTab === 'approaches' ? '#c084fc' : 'var(--text-muted)',
@@ -383,7 +409,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setMainNavTab('daily-plan')}
+              onClick={() => window.location.hash = 'daily-plan'}
               style={{
                 background: mainNavTab === 'daily-plan' ? 'rgba(34, 197, 94, 0.15)' : 'transparent',
                 color: mainNavTab === 'daily-plan' ? 'var(--success)' : 'var(--text-muted)',
@@ -421,7 +447,7 @@ export default function App() {
                     <div
                       key={topic.id}
                       onClick={() => {
-                        setSelectedTopicId(topic.id);
+                        window.location.hash = `concepts/${topic.id}`;
                         setSelectedDifficultyTab('Easy');
                       }}
                       style={{
@@ -502,7 +528,7 @@ export default function App() {
                     <div
                       key={comp.id}
                       onClick={() => {
-                        setSelectedCompanyId(comp.id);
+                        window.location.hash = `companies/${comp.id}`;
                         setCompanySectionTab('Prerequisites');
                         setSelectedDifficultyTab('All');
                       }}
@@ -584,7 +610,7 @@ export default function App() {
                     <div
                       key={appr.id}
                       onClick={() => {
-                        setSelectedApproachId(appr.id);
+                        window.location.hash = `approaches/${appr.id}`;
                         setSelectedDifficultyTab('All');
                       }}
                       style={{
@@ -647,26 +673,7 @@ export default function App() {
         /* ── DETAIL PROBLEM LIST VIEW (Topic OR Company OR Approach) ── */
         <div>
           {/* Back button & Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
-            <button
-              onClick={() => { setSelectedTopicId(null); setSelectedCompanyId(null); setSelectedApproachId(null); }}
-              style={{
-                background: 'var(--panel)',
-                border: '1px solid var(--border)',
-                color: 'var(--text)',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <ArrowLeft size={18} /> {activeApproach ? 'Back to Solution Approaches' : (activeCompany ? 'Back to Companies' : 'Back to Concept Modules')}
-            </button>
-
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
             <button
               onClick={() => setShowAddForm(!showAddForm)}
               style={{
