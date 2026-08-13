@@ -20,7 +20,7 @@ export const APPROACHES_LIST: Approach[] = [
 ];
 
 export const COMPANY_LIST: Company[] = [
-  { id: 'most-repeated-130', name: 'Most Repeated 130', icon: '🔥', color: '#ef4444', description: 'Curated 130 most frequently asked LeetCode interview questions across top tech companies.' },
+  { id: 'most-repeated-130', name: 'Most Repeated 130', icon: '🔥', color: '#ef4444', description: '130 Most Popular LeetCode Problems to crack coding interviews (Curated by Supriya Singh on Medium).' },
   { id: 'top-75', name: 'Blind Top 75', icon: '🎯', color: '#10b981', description: 'Curated list of Top 75 LeetCode Questions to save your time. Master core concepts and techniques.' },
   { id: 'google', name: 'Google', icon: '🔍', color: '#4285F4', description: 'Comprehensive Google Roadmap: Foundational Easy Prerequisites + Top Interview Problems (2025-2026).' },
   { id: 'amazon', name: 'Amazon', icon: '📦', color: '#FF9900', description: 'Top Amazon Leadership Principles & Online Assessment questions.' },

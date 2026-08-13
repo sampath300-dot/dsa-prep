@@ -707,13 +707,23 @@ export default function App() {
               )}
               <span>{activeApproach ? `${activeApproach.name} Pattern` : (activeCompany ? `${activeCompany.name} Interview Questions` : activeTopic?.title)}</span>
             </h2>
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span>{activeApproach ? activeApproach.description : (activeCompany ? activeCompany.description : activeTopic?.description)}</span>
               {activeApproach && (
                 <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', fontFamily: 'monospace' }}>
                   <Code2 size={13} style={{ display: 'inline', marginRight: '4px' }} />
                   Python Tool: {activeApproach.tool}
                 </span>
+              )}
+              {activeCompany?.id === 'most-repeated-130' && (
+                <a
+                  href="https://medium.com/@goforsupriya/most-popular-leetcode-problems-to-help-crack-coding-interviews-58b07093da2"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontSize: '0.8rem', color: 'var(--primary)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}
+                >
+                  <ExternalLink size={13} /> Original Article by Supriya Singh on Medium
+                </a>
               )}
             </p>
           </div>
